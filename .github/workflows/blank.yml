@@ -1,0 +1,26 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@main
+      - name: Deploy
+        run: |
+          eval $(ssh-agent -s)
+          ssh-add <(echo "$SSH_PRIVATE_KEY" )
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          scp -r * root@$SERVER_IP:/var/www/your_domain
+    env:
+      SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+      SERVER_IP: ${{secrets.SERVER_IP}}
+      CI: false
